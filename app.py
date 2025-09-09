@@ -55,6 +55,8 @@ class Book(Base):
     
     loans: Mapped[list['Loan']] = db.relationship('Loan', secondary=loan_book, back_populates='books')
     
+# Create API Routes Here----
+    
 # Create the table
 with app.app_context():
     db.create_all()
