@@ -1,7 +1,7 @@
 from datetime import date
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Date, ForeignKey, String, Table, Column
+from sqlalchemy import Date, String, Table, Column, ForeignKey
 
 # create  base class for our models
 class Base(DeclarativeBase):
@@ -13,8 +13,8 @@ db = SQLAlchemy(model_class = Base)
 loan_books = db.Table(
     'loan_books',
     Base.metadata,
-    db.Column('loan_id', db.ForeignKey('loans.id')),
-    db.Column('book_id', db.ForeignKey('books.id'))
+    db.Column('loan_id', ForeignKey('loans.id')),
+    db.Column('book_id', ForeignKey('books.id'))
 )
 
 
@@ -37,10 +37,10 @@ class Loans(Base):
     __tablename__ = 'loans'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
     loan_date: Mapped[date] = mapped_column(Date, nullable=True)
     deadline: Mapped[date] = mapped_column(Date, nullable=True)
     return_date: Mapped[date] = mapped_column(Date, nullable=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'), nullable=False)
 
     #Relationships
     user: Mapped['Users'] = relationship('Users', back_populates='loans')

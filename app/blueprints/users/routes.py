@@ -3,9 +3,11 @@ from .schemas import user_schema, users_schema
 from flask import request, jsonify
 from marshmallow import ValidationError
 from app.models import Users, db
+from app.extensions import limiter, cache
 
 #CREATE USER ROUTE
 @users_bp.route('', methods=['POST']) #route servers as the trigger for the function below.
+@limiter.limit("3 per hour") # A client can only attempt to make 3 users per hour
 def create_user():
     try:
         data = user_schema.load(request.json)
@@ -20,6 +22,7 @@ def create_user():
 
 #Read Users
 @users_bp.route('', methods=['GET']) #Endpoint to get user information
+@cache.cached(timeout=60)
 def read_users():
     users = db.session.query(Users).all()
     return users_schema.jsonify(users), 200
