@@ -1,9 +1,37 @@
 from app.blueprints.users import users_bp
 from .schemas import user_schema, users_schema
 from flask import request, jsonify
+from sqlalchemy import select
 from marshmallow import ValidationError
 from app.models import Users, db
 from app.extensions import limiter, cache
+from app.utils.util import encode_token, token_required
+
+
+@users_bp.route('/login', methods=['POST'])
+def login():
+    try:
+        credentials = request.json
+        username = credentials['username']
+        password = credentials['password']
+    except KeyError:
+        return jsonify({'messages': 'Invalid payload, expecting username and password'})
+    
+    query = select(Users).where(Users.username == username)
+    user = db.session.execute(query).scalar_one_or_none() # Query user table for a user with this username
+    
+    if user and user.password == password:
+        auth_token = encode_token(user.id)
+        
+        response = {
+            'status': 'success',
+            'message': 'Successfully Logged in',
+            'auth_token': auth_token
+        }
+        
+        return jsonify(response), 200
+    else:
+        return jsonify({'messages': 'Invalid username or password'})
 
 #CREATE USER ROUTE
 @users_bp.route('', methods=['POST']) #route servers as the trigger for the function below.
@@ -34,7 +62,8 @@ def read_user(user_id):
     return user_schema.jsonify(user), 200
 
 #Delete a User
-@users_bp.route('<int:user_id>', methods=['DELETE'])
+@users_bp.route('', methods=['DELETE'])
+@token_required
 def delete_user(user_id):
     user = db.session.get(Users, user_id)
     db.session.delete(user)
