@@ -1,5 +1,5 @@
 from app.blueprints.users import users_bp
-from .schemas import user_schema, users_schema
+from .schemas import user_schema, users_schema, login_schema
 from flask import request, jsonify
 from sqlalchemy import select
 from marshmallow import ValidationError
@@ -11,16 +11,14 @@ from app.utils.util import encode_token, token_required
 @users_bp.route('/login', methods=['POST'])
 def login():
     try:
-        credentials = request.json
-        username = credentials['username']
-        password = credentials['password']
+        credentials = login_schema.load(request.json)
     except KeyError:
         return jsonify({'messages': 'Invalid payload, expecting username and password'})
     
-    query = select(Users).where(Users.username == username)
+    query = select(Users).where(Users.username == credentials['username'])
     user = db.session.execute(query).scalar_one_or_none() # Query user table for a user with this username
     
-    if user and user.password == password:
+    if user and user.password == credentials['password']:
         auth_token = encode_token(user.id)
         
         response = {
