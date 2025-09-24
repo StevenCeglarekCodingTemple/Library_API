@@ -11,4 +11,4 @@ with app.app_context():
     db.create_all()
     
 
-app.run(port=5002)
+app.run(port=5003)
