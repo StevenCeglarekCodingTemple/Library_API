@@ -6,6 +6,7 @@ from marshmallow import ValidationError
 from app.models import Users, db
 from app.extensions import limiter, cache
 from app.utils.util import encode_token, token_required
+from werkzeug.security import check_password_hash, generate_password_hash
 
 
 @users_bp.route('/login', methods=['POST'])
@@ -18,7 +19,7 @@ def login():
     query = select(Users).where(Users.username == credentials['username'])
     user = db.session.execute(query).scalar_one_or_none() # Query user table for a user with this username
     
-    if user and user.password == credentials['password']:
+    if user and check_password_hash(user.password, credentials['password']):
         auth_token = encode_token(user.id)
         
         response = {
@@ -40,6 +41,11 @@ def create_user():
     except ValidationError as e:
         return jsonify(e.messages), 400 #Returning the error as a response so my client can see whats wrong.
     
+    taken = db.session.query(Users).where(Users.email==data['email']).first()
+    if taken: #Checks if I got a user from the query
+        return jsonify({'message': 'email is taken'}), 400
+    
+    data['password'] = generate_password_hash(data['password']) #resetting the password key's value, to the hash of the current value
 
     new_user = Users(**data) #Creating User object
     db.session.add(new_user)
@@ -69,7 +75,8 @@ def delete_user(user_id):
     return jsonify({"message": f"Successfully deleted user {user_id}"}), 200
 
 #Update a User
-@users_bp.route('<int:user_id>', methods=['PUT'])
+@users_bp.route('', methods=['PUT'])
+@token_required
 def update_user(user_id):
     user = db.session.get(Users, user_id) #Query for our user to update
 
@@ -80,6 +87,8 @@ def update_user(user_id):
         user_data = user_schema.load(request.json) #Validating updates
     except ValidationError as e:
         return jsonify({"message": e.messages}), 400
+    
+    user_data['password'] = generate_password_hash(user_data['password']) #resetting the password key's value, to the hash of the current value
     
     for key, value in user_data.items(): #Looping over attributes and values from user data dictionary
         setattr(user, key, value) # setting Object, Attribute, Value to replace
