@@ -7,6 +7,7 @@ from .blueprints.books import books_bp
 from .blueprints.orders import orders_bp
 from .blueprints.items import items_bp
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
 API_URL = '/static/swagger.yaml'  # Our API URL (can of course be a local resource)
@@ -24,6 +25,7 @@ def create_app(config_name):
     
     app = Flask(__name__)
     app.config.from_object(f'config.{config_name}')
+    CORS(app)
     
     # initialize extensions (plugging them in)
     db.init_app(app)
