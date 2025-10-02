@@ -4,7 +4,7 @@ info:
   title: "Library API"
   description: "Used to manage the everyday functionalities of a library"
   version: "1.0.0"
-host: "127.0.0.1:5003" 
+host: "library-api-y2ad.onrender.com" 
 schemes:
   - "https"
   - "http"
