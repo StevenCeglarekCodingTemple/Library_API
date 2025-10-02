@@ -7,7 +7,7 @@ app = create_app('ProductionConfig')
 
 # Create the table
 with app.app_context():
-    # db.drop_all()
+    db.drop_all()
     db.create_all()
     
 
